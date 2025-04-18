@@ -38,7 +38,7 @@
     <div id="intro" style="display:none;">
       <h2>说明</h2>
       <p>本测试将依次呈现“+”（注视点）和单个数字，每个呈现时长为1秒。请在每组结束后，将刚才出现的整个数字序列按倒序顺序输入。</p>
-      <p>每个数字长度下需完成3次测试，正确次数 ≥ 2 则进入下一长度；否则测试结束并导出记录。</p>
+      <p>每个数字长度下需完成3次测试，正确次数 ≥ 2 则进入下一长度；否则测试结束，最长序列即为上一长度。</p>
       <button id="btnBegin" class="control">开始测试</button>
     </div>
     <!-- 正式测试 -->
@@ -62,67 +62,100 @@
     <button id="btnSubmit" class="control" disabled>提交</button>
     <div class="feedback" id="feedback"></div>
     <!-- 结束与导出 -->
-    <div id="endMsg">测试已结束。</div>
+    <div id="endMsg"></div>
     <div id="resultContainer">
-      <button type="button" onclick="exportResults()">导出结果 并返回提交</button>
+      <button type="button" onclick="exportResults()">导出并保存结果到本地文件！之后请返回提交！</button>
     </div>
   </div>
   <script>
-    const trials=[
-      {length:3,digits:["217","486","760"]},
-      {length:4,digits:["3141","6351","2391"]},
-      {length:5,digits:["14932","10646","74832"]},
-      {length:6,digits:["934648","179390","408288"]},
-      {length:7,digits:["4498237","2544371","8875085"]},
-      {length:8,digits:["46229408","70967882","27139320"]},
-      {length:9,digits:["368373442","576270919","688655957"]},
-      {length:10,digits:["6432900801","8467348927","4184946413"]},
-      {length:11,digits:["73290740563","74948772224","97084622072"]},
-      {length:12,digits:["681346000000","872380000000","241072000000"]}
+    const trials = [
+      { length: 3, digits: ["217","486","760"] },
+      { length: 4, digits: ["3141","6351","2391"] },
+      { length: 5, digits: ["14932","10646","74832"] },
+      { length: 6, digits: ["934648","179390","408288"] },
+      { length: 7, digits: ["4498237","2544371","8875085"] },
+      { length: 8, digits: ["46229408","70967882","27139320"] },
+      { length: 9, digits: ["368373442","576270919","688655957"] },
+      { length: 10, digits: ["6432900801","8467348927","4184946413"] },
+      { length: 11, digits: ["73290740563","74948772224","97084622072"] },
+      { length: 12, digits: ["7329074056341","8493021746957","3629184750263"] },
+      { length: 13, digits: ["93847265019284","17495028374659","32894756102938"] },
+      { length: 14, digits: ["109283746592038","475920384756109","392847561029384"] },
+      { length: 15, digits: ["1827364591028374","2948576102938475","3847561920384756"] }
     ];
-    let level=0,trial=0,correctCount=0,showing=false,seqEndTime=0,studentId="",studentClass="",records=[];
-    const controlsEl=document.getElementById("controls"),introEl=document.getElementById("intro"),beforeEl=document.getElementById("beforeTest"),dispEl=document.getElementById("digitDisplay"),respEl=document.getElementById("response"),startBtn=document.getElementById("btnStart"),beginBtn=document.getElementById("btnBegin"),subBtn=document.getElementById("btnSubmit"),fbEl=document.getElementById("feedback"),endMsgEl=document.getElementById("endMsg"),resultCon=document.getElementById("resultContainer"),idEl=document.getElementById("studentId"),classEl=document.getElementById("studentClass"),keys=document.querySelectorAll(".key-btn");
-    keys.forEach(btn=>btn.addEventListener("click",()=>{if(showing||subBtn.disabled)return;const k=btn.dataset.key;if(k==="清除")respEl.innerText="";else if(k==="删除")respEl.innerText=respEl.innerText.slice(0,-1);else respEl.innerText+=k;}));
-    startBtn.addEventListener("click",()=>{studentId=idEl.value.trim();studentClass=classEl.value.trim();if(!studentId||!studentClass)return alert("请先填写学生ID和班级！");controlsEl.style.display="none";introEl.style.display="block";});
-    beginBtn.addEventListener("click",()=>{introEl.style.display="none";beforeEl.style.display="block";runSequence();});
-    subBtn.addEventListener("click",()=>{
-      if(showing)return;
-      const original=trials[level].digits[trial];
-      const correctAns=original.split('').reverse().join('');
-      const answer=respEl.innerText.trim();
-      const rt=Date.now()-seqEndTime;
-      records.push({level:trials[level].length,trial:trial+1,original,answer,correctAns,accurate:answer===correctAns?"是":"否",rt});
-      // 增加正确计数
+    let level = 0, trial = 0, correctCount = 0, showing = false, seqEndTime = 0, studentId = "", studentClass = "", records = [];
+    let reachedLen = 0;
+    const controlsEl = document.getElementById("controls"), introEl = document.getElementById("intro"), beforeEl = document.getElementById("beforeTest"), dispEl = document.getElementById("digitDisplay"), respEl = document.getElementById("response"), startBtn = document.getElementById("btnStart"), beginBtn = document.getElementById("btnBegin"), subBtn = document.getElementById("btnSubmit"), fbEl = document.getElementById("feedback"), endMsgEl = document.getElementById("endMsg"), resultCon = document.getElementById("resultContainer"), idEl = document.getElementById("studentId"), classEl = document.getElementById("studentClass"), keys = document.querySelectorAll(".key-btn");
+    keys.forEach(btn => btn.addEventListener("click", () => {
+      if (showing || subBtn.disabled) return;
+      const k = btn.dataset.key;
+      if (k === "清除") respEl.innerText = "";
+      else if (k === "删除") respEl.innerText = respEl.innerText.slice(0, -1);
+      else respEl.innerText += k;
+    }));
+    startBtn.addEventListener("click", () => {
+      studentId = idEl.value.trim(); studentClass = classEl.value.trim();
+      if (!studentId || !studentClass) return alert("请先填写学生ID和班级！");
+      controlsEl.style.display = "none"; introEl.style.display = "block";
+    });
+    beginBtn.addEventListener("click", () => {
+      introEl.style.display = "none"; beforeEl.style.display = "block"; runSequence();
+    });
+    subBtn.addEventListener("click", () => {
+      if (showing) return;
+      const original = trials[level].digits[trial];
+      const correctAns = original.split('').reverse().join('');
+      const answer = respEl.innerText.trim();
+      const rt = Date.now() - seqEndTime;
+      records.push({ level: trials[level].length, trial: trial+1, original, answer, correctAns, accurate: answer===correctAns?"是":"否", rt });
       if(answer===correctAns) correctCount++;
-      fbEl.innerText=answer===correctAns?"✅ 正确":`❌ 错误，答案：${correctAns}`;
-      respEl.innerText="";subBtn.disabled=true;showing=true;
-      setTimeout(()=>{
+      fbEl.innerText = answer===correctAns?"✅ 正确":`❌ 错误，答案：${correctAns}`;
+      respEl.innerText = ""; subBtn.disabled = true; showing = true;
+      setTimeout(() => {
         trial++;
-        if(trial===3){
-          if(correctCount>=2){
-            level++;trial=0;correctCount=0;runSequence();
+        if (trial === 3) {
+          if (correctCount >= 2) {
+            reachedLen = trials[level].length;
+            level++; trial = 0; correctCount = 0; runSequence();
           } else {
-            showing=false;endMsgEl.style.display="block";resultCon.style.display="block";
+            reachedLen = level>0? trials[level-1].length : 0;
+            endMsgEl.innerText = `测试已结束。您最长回忆 ${reachedLen} 位数字序列。`;
+            endMsgEl.style.display = "block"; resultCon.style.display = "block";
           }
         } else {
-          fbEl.innerText="";showing=false;runSequence();
+          fbEl.innerText = ""; showing = false; runSequence();
         }
-      },800);
+      }, 800);
     });
-    function runSequence(){
-      if(level>=trials.length){showing=false;endMsgEl.style.display="block";resultCon.style.display="block";return;}
-      showing=true;subBtn.disabled=true;respEl.innerText="";
-      const seq=[];for(const ch of trials[level].digits[trial]){seq.push("+");seq.push(ch);}seq.push("+");
-      let idx=0;const timer=setInterval(()=>{dispEl.innerText=seq[idx++];if(idx>seq.length-1){clearInterval(timer);setTimeout(()=>{dispEl.innerText="请输入倒序数字";showing=false;subBtn.disabled=false;seqEndTime=Date.now();},100);} },1000);
+    function runSequence() {
+      if (level >= trials.length) {
+        reachedLen = trials[trials.length-1].length;
+        endMsgEl.innerText = `测试已结束。您最长回忆 ${reachedLen} 位数字序列。`;
+        endMsgEl.style.display = "block"; resultCon.style.display = "block"; return;
+      }
+      showing = true; subBtn.disabled = true; respEl.innerText = "";
+      const seq = [];
+      for (const ch of trials[level].digits[trial]) { seq.push("+"); seq.push(ch); }
+      seq.push("+");
+      let idx = 0;
+      const timer = setInterval(() => {
+        dispEl.innerText = seq[idx++];
+        if (idx > seq.length - 1) {
+          clearInterval(timer);
+          setTimeout(() => { dispEl.innerText = "请输入倒序数字"; showing = false; subBtn.disabled = false; seqEndTime = Date.now(); }, 100);
+        }
+      }, 1000);
     }
-    function exportResults(){
-      const data=[["学生ID",studentId],["班级",studentClass],[],["关卡","试次","原始数字","输入答案","正确答案","准确","反应时间(ms)"],...records.map(r=>[r.level,r.trial,r.original,r.answer,r.correctAns,r.accurate,r.rt])];
-      const ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Results");
-      const wbout=XLSX.write(wb,{bookType:'xlsx',type:'binary'});
-      function s2ab(s){const buf=new ArrayBuffer(s.length),view=new Uint8Array(buf);for(let i=0;i<s.length;i++)view[i]=s.charCodeAt(i)&0xFF;return buf;}
-      const blob=new Blob([s2ab(wbout)],{type:"application/octet-stream"});
-      const url=URL.createObjectURL(blob),downloadLink=document.createElement("a");downloadLink.href=url;downloadLink.download="result.xlsx";document.body.appendChild(downloadLink);downloadLink.click();document.body.removeChild(downloadLink);
-      setTimeout(()=>{window.location.href="https://c.wss.pet/s/gqzbglms1r8";},2000);
+    function exportResults() {
+      const data = [ ["学生ID", studentId], ["班级", studentClass], [], ["关卡","试次","原始数字","输入答案","正确答案","准确","反应时间(ms)"], ...records.map(r => [r.level, r.trial, r.original, r.answer, r.correctAns, r.accurate, r.rt]) ];
+      const ws = XLSX.utils.aoa_to_sheet(data), wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Results");
+      const wbout = XLSX.write(wb, { bookType:'xlsx', type:'binary' });
+      function s2ab(s) { const buf = new ArrayBuffer(s.length), view = new Uint8Array(buf); for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; return buf; }
+      const blob = new Blob([s2ab(wbout)], { type:"application/octet-stream" });
+      const url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = "result.xlsx"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      setTimeout(() => { window.location.href = "https://c.wss.pet/s/gsmvaegj3s4"; }, 2000);
     }
   </script>
 </body>
