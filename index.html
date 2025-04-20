@@ -73,10 +73,20 @@
     <!-- 结束与导出 -->
     <div id="endMsg"></div>
     <div id="resultContainer">
-      <button type="button" onclick="exportResults()">导出结果请保存至本地文件 并返回提交</button>
-     <!-- 新增：显示 CSV 文本按钮 -->
-     <button type="button" onclick="showCSV()">📋 显示CSV文本以复制</button>
-    </div>
+      <!-- 导出按钮 -->
+    <button type="button" onclick="exportResults()">
+    📥 导出.xlsx 并返回提交
+     </button>
+    <!-- 下载失败提示 -->
+    <p style="font-size:0.9em; color:#666; margin:0.5em 0;">
+    如下载失败，请复制下方内容：
+    </p>
+    <!-- CSV 文本按钮 -->
+    <button type="button" onclick="showCSV()">
+    📋 显示CSV文本以复制
+   </button>
+  </div>
+    
 
    <!-- 新增：放 CSV 文本的容器 -->
     <div id="csvContainer" style="display:none; margin-top:20px; text-align:left;">
@@ -139,7 +149,7 @@
 
     // 可选：20 秒后自动跳转（和前面保持一致）
     setTimeout(() => {
-      window.location.href = "https://www.wjx.cn/vm/YeLp9Ft.aspx";
+      window.location.href = "https://www.wjx.cn/vm/mBZc3BR.aspx";
     }, 20000);
   }
   </script>
