@@ -25,6 +25,19 @@
     #resultContainer button { width:100%; font-size:20px; padding:12px; border:none; border-radius:8px; background:linear-gradient(145deg,#4dd39e,#2fa874); color:#fff; box-shadow:4px 4px 10px rgba(0,0,0,0.15), -4px -4px 10px rgba(255,255,255,0.7); }
     .alert-red { color: #e74c3c; font-weight: bold; }
     .highlight {background-color: yellow; font-weight: bold;}
+    .copy-status {
+  display: none;
+  margin-top: 10px;
+  font-size: 14px;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-align: center;
+}
+.copy-status.show {
+  display: block;
+}
   </style>
 </head>
 <body>
@@ -89,10 +102,12 @@
     
 
    <!-- 新增：放 CSV 文本的容器 -->
-    <div id="csvContainer" style="display:none; margin-top:20px; text-align:left;">
-    <h3>请长按复制以下内容：</h3>
+    <div id="csvContainer" style="display:none; margin-top:20px; text-align:left; position:relative;">
+    <h3>请复制以下内容：</h3>
     <pre id="csvContent" style="white-space:pre-wrap; background:#fafafa; border:1px solid #ccc; padding:10px; border-radius:4px;"></pre>
-    </div>
+    <button id="copyCsvBtn" class="control">📋 一键复制</button>
+    <div id="copyStatus" class="copy-status">✅ 已复制！</div>
+   </div>
    </div>
 
   <script>
@@ -146,6 +161,17 @@
     // 显示到页面
     document.getElementById("csvContent").innerText = csv;
     document.getElementById("csvContainer").style.display = "block";
+    const copyBtn = document.getElementById("copyCsvBtn");
+const status = document.getElementById("copyStatus");
+
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(csv).then(() => {
+    status.classList.add("show");
+    setTimeout(() => status.classList.remove("show"), 2000);
+  }).catch(err => {
+    alert("复制失败：" + err);
+  });
+};
 
     // 可选：20 秒后自动跳转（和前面保持一致）
     setTimeout(() => {
