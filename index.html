@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
@@ -74,8 +74,17 @@
     <div id="endMsg"></div>
     <div id="resultContainer">
       <button type="button" onclick="exportResults()">导出结果请保存至本地文件 并返回提交</button>
+     <!-- 新增：显示 CSV 文本按钮 -->
+     <button type="button" onclick="showCSV()">📋 显示CSV文本以复制</button>
     </div>
-  </div>
+
+   <!-- 新增：放 CSV 文本的容器 -->
+    <div id="csvContainer" style="display:none; margin-top:20px; text-align:left;">
+    <h3>请长按复制以下内容：</h3>
+    <pre id="csvContent" style="white-space:pre-wrap; background:#fafafa; border:1px solid #ccc; padding:10px; border-radius:4px;"></pre>
+    </div>
+   </div>
+
   <script>
     const warmupTrials = ["418"];
     const trials = [
@@ -104,6 +113,35 @@
     function runWarmup(){showing=true;subBtn.disabled=true;respEl.innerText="";beforeEl.innerText="请倒序输入数字。";const original=warmupTrials[warmup];const seq=["+",...original.split(''),"+"];let idx=0;const timer=setInterval(()=>{dispEl.innerText=seq[idx++];if(idx>seq.length-1){clearInterval(timer);setTimeout(()=>{dispEl.innerText="请输入倒序数字";showing=false;subBtn.disabled=false;seqEndTime=Date.now();},100);}},1000);}    
     function runSequence(){if(level>=trials.length){reachedLen=trials[trials.length-1].length;endMsgEl.innerText=`测试已结束。您最长回忆 ${reachedLen} 位数字序列。`;endMsgEl.style.display="block";resultCon.style.display="block";return;}showing=true;subBtn.disabled=true;respEl.innerText="";beforeEl.innerText="请倒序输入呈现的数字。";const original=trials[level].digits[trial];const seq=["+",...original.split(''),"+"];let idx=0;const timer=setInterval(()=>{dispEl.innerText=seq[idx++];if(idx>seq.length-1){clearInterval(timer);setTimeout(()=>{dispEl.innerText="请输入倒序数字";showing=false;subBtn.disabled=false;seqEndTime=Date.now();},100);}},1000);}    
     function exportResults(){const data=[["学生ID",studentId],["班级",studentClass],[],["关卡","试次","原始数字","输入答案","正确答案","准确","反应时间(ms)"],...records.map(r=>[r.length,r.trial,r.original,r.answer,r.correctAns,r.accurate,r.rt])];const ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Results");const wbout=XLSX.write(wb,{bookType:'xlsx',type:'binary'});function s2ab(s){const buf=new ArrayBuffer(s.length),view=new Uint8Array(buf);for(let i=0;i<s.length;i++)view[i]=s.charCodeAt(i)&0xFF;return buf;}const blob=new Blob([s2ab(wbout)],{type:"application/octet-stream"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="result.xlsx";document.body.appendChild(link);link.click();document.body.removeChild(link);setTimeout(()=>{window.location.href="https://c.wss.pet/s/gt83u2qujtw";},2000);}  
+      // … 你的 exportResults() 定义结束后 …
+
+  // 将 records 输出成可复制的 CSV 文本
+  function showCSV() {
+    // 学号和班级
+    const sid = studentId;
+    const sclass = studentClass;
+
+    // 构建 CSV 行
+    const rows = [
+      ["学生ID", sid],
+      ["班级", sclass],
+      [],
+      ["关卡","试次","原始数字","输入答案","正确答案","准确","反应时间(ms)"],
+      ...records.map(r => [r.length, r.trial, r.original, r.answer, r.correctAns, r.accurate, r.rt])
+    ];
+
+    // 拼成字符串
+    const csv = rows.map(r => r.join(",")).join("\n");
+
+    // 显示到页面
+    document.getElementById("csvContent").innerText = csv;
+    document.getElementById("csvContainer").style.display = "block";
+
+    // 可选：20 秒后自动跳转（和前面保持一致）
+    setTimeout(() => {
+      window.location.href = "https://www.wjx.cn/vm/YeLp9Ft.aspx";
+    }, 20000);
+  }
   </script>
 </body>
 </html>
